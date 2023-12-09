@@ -1,14 +1,12 @@
+import matplotlib.colors as mcolors
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.nn.functional as F
-import numpy as np
-from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.metrics import roc_curve, auc
-from scipy.optimize import brentq
 from scipy.interpolate import interp1d
-import matplotlib.pyplot as plt
-
-import matplotlib.colors as mcolors
-import os
+from scipy.optimize import brentq
+from sklearn.metrics import roc_curve, auc
+from sklearn.metrics.pairwise import pairwise_distances
 
 linestyle_tuple = [
     # ('loosely dotted', (0, (1, 10))),

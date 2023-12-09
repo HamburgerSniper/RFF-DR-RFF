@@ -1,8 +1,5 @@
 import torch
-import os
 from scipy.io import loadmat as load
-import numpy as np
-from numpy import pi as pi
 
 is_debug = False
 if not is_debug:

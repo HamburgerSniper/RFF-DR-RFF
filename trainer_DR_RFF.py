@@ -1,13 +1,10 @@
 import marveltoolbox as mt
-from src.models import *
-import os
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import torchvision as tv
+
+from src.Unet import SUNet, SUNetZ
 from src.dataset import *
 from src.evaluation import *
-from src.Unet import SUNet, SUNetZ
+from src.models import *
 
 
 class Confs(mt.BaseConfs):
