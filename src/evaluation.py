@@ -11,24 +11,25 @@ import matplotlib.colors as mcolors
 import os
 
 linestyle_tuple = [
-# ('loosely dotted', (0, (1, 10))),
-# ('dotted', (0, (1, 1))),
-('solid','solid'), 
-('dashed','dashed'), 
-('dashdot','dashdot'), 
-('dotted','dotted'),
-# ('densely dotted', (0, (1, 2))), 
-# ('loosely dashed', (0, (5, 10))),
-# ('dashed', (0, (5, 5))),
-('densely dashdotdotted', (0, (3, 1, 1, 1, 1, 1))),
-('densely dashdotted', (0, (3, 1, 1, 1))),
-('densely dashed', (0, (5, 1))), ('loosely dashdotted', (0, (3, 10, 1, 10))),
-('dashdotted', (0, (3, 5, 1, 5))),
-('densely dashdotted', (0, (3, 1, 1, 1))), ('dashdotdotted', (0, (3, 5, 1, 5, 1, 5))),
-('loosely dashdotdotted', (0, (3, 10, 1, 10, 1, 10))),
-('densely dashdotdotted', (0, (3, 1, 1, 1, 1, 1)))]
+    # ('loosely dotted', (0, (1, 10))),
+    # ('dotted', (0, (1, 1))),
+    ('solid', 'solid'),
+    ('dashed', 'dashed'),
+    ('dashdot', 'dashdot'),
+    ('dotted', 'dotted'),
+    # ('densely dotted', (0, (1, 2))),
+    # ('loosely dashed', (0, (5, 10))),
+    # ('dashed', (0, (5, 5))),
+    ('densely dashdotdotted', (0, (3, 1, 1, 1, 1, 1))),
+    ('densely dashdotted', (0, (3, 1, 1, 1))),
+    ('densely dashed', (0, (5, 1))), ('loosely dashdotted', (0, (3, 10, 1, 10))),
+    ('dashdotted', (0, (3, 5, 1, 5))),
+    ('densely dashdotted', (0, (3, 1, 1, 1))), ('dashdotdotted', (0, (3, 5, 1, 5, 1, 5))),
+    ('loosely dashdotdotted', (0, (3, 10, 1, 10, 1, 10))),
+    ('densely dashdotdotted', (0, (3, 1, 1, 1, 1, 1)))]
 
 markers = ['o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', 'D', 'd', 'P', 'X']
+
 
 def torch_distance(x):
     x_x = (x * x).sum(1).repeat(1, x.size(0))
@@ -72,6 +73,7 @@ def pair_dist(features1, features2, metric='cosine'):
     pair_dist = np.diag(distance)
     return pair_dist
 
+
 def compute_centers(features, labels):
     class_num = len(list(set(labels)))
     N = features.shape[0]
@@ -99,8 +101,9 @@ def center_dist(features, labels, centers):
     inter_dist = distance[mask == 0]
     return intra_dist, inter_dist
 
+
 def distance_hist_plot(intra_dist, inter_dist, filename=None):
-    plt.figure(figsize=(4,3), dpi=300)
+    plt.figure(figsize=(4, 3), dpi=300)
     # plt.title('Distance distribution')
     plt.hist(intra_dist, 100, density=True, alpha=0.5)
     plt.hist(inter_dist, 100, density=True, alpha=0.5)
@@ -109,7 +112,7 @@ def distance_hist_plot(intra_dist, inter_dist, filename=None):
         plt.savefig(filename, bbox_inches='tight')
         plt.close()
 
-    
+
 def get_auc_eer(intra_dist, inter_dist, plot_roc=False, filename=None):
     inter_label = np.ones_like(inter_dist)
     intra_label = np.zeros_like(intra_dist)
@@ -123,7 +126,7 @@ def get_auc_eer(intra_dist, inter_dist, plot_roc=False, filename=None):
         plt.figure()
         lw = 2
         plt.plot(fpr, tpr, color='darkorange',
-                lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+                 lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
         plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
         plt.xlim([0.0, 1.0])
         plt.ylim([0.0, 1.05])
@@ -138,8 +141,9 @@ def get_auc_eer(intra_dist, inter_dist, plot_roc=False, filename=None):
 
     return fpr, tpr, eer, roc_auc, thresh
 
+
 def roc_plots(distance_dict, name_dict=None, file_name='ROC.png'):
-    plt.figure(figsize=(4,4), dpi=300)
+    plt.figure(figsize=(4, 4), dpi=300)
     lw = 2
     colour_idxs = list(mcolors.TABLEAU_COLORS)
     linestyle = ['solid', 'dashed', 'dashdot', 'dotted']
@@ -165,9 +169,9 @@ def roc_plots(distance_dict, name_dict=None, file_name='ROC.png'):
         else:
             label_name = name_dict[model]
         plt.plot(
-            fpr, tpr, color=mcolors.TABLEAU_COLORS[colour_idxs[ci]], 
-            linestyle=linestyle_tuple[int(ci%7)][1],
-                lw=lw, label='AUC:{:.2f} EER:{:.2f} {}'.format(roc_auc, eer, label_name))
+            fpr, tpr, color=mcolors.TABLEAU_COLORS[colour_idxs[ci]],
+            linestyle=linestyle_tuple[int(ci % 7)][1],
+            lw=lw, label='AUC:{:.2f} EER:{:.2f} {}'.format(roc_auc, eer, label_name))
         ci += 1
     plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
     plt.xlim([0.0, 1.0])
@@ -183,10 +187,12 @@ def roc_plots(distance_dict, name_dict=None, file_name='ROC.png'):
     plt.close()
     return result_dict
 
+
 def cos_clf(feature_x, feature_t, threshold=0.79):
     cosine_sim = -F.cosine_similarity(feature_x, feature_t).view(-1, 1) + 1
-    output = torch.cat((-cosine_sim + 2*threshold, cosine_sim), dim=1)
+    output = torch.cat((-cosine_sim + 2 * threshold, cosine_sim), dim=1)
     return output
+
 
 def l2_norm(input):
     input_size = input.size()

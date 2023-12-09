@@ -10,19 +10,19 @@ def fft_plot(x, samples=200, filename=None):
     f = np.arange(N)
     if isinstance(x, np.ndarray):
         fft_x = np.fft.fft(x)
-        abs_x=np.abs(fft_x/N)                
-        angle_x=np.angle(fft_x/N)          
-        
+        abs_x = np.abs(fft_x / N)
+        angle_x = np.angle(fft_x / N)
+
         x_imag = x.imag
         x_real = x.real
-    
+
     elif isinstance(x, torch.Tensor):
         if x.shape[-1] == 2:
             x_complex = torch.view_as_complex(x)
             fft_x = torch.view_as_real(torch.fft.fft(x_complex, dim=-1))
-            abs_x = TorchComplex.abs(fft_x/N).numpy()
+            abs_x = TorchComplex.abs(fft_x / N).numpy()
             # angle_x = TorchComplex.phase(fft_x/N).numpy()
-            angle_x = TorchComplex.phase_np(fft_x/N)
+            angle_x = TorchComplex.phase_np(fft_x / N)
             x_imag = TorchComplex.imag(x).numpy()
             x_real = TorchComplex.real(x).numpy()
         else:
@@ -34,20 +34,20 @@ def fft_plot(x, samples=200, filename=None):
         print('Can not suppose this dtype!')
 
     plt.figure(figsize=(20, 8))
-    ax1 = plt.subplot(3,1,1)
-    ax1.plot(f[:samples],x_real[:samples], '*-')   
+    ax1 = plt.subplot(3, 1, 1)
+    ax1.plot(f[:samples], x_real[:samples], '*-')
     ax1.set_title('time real')
 
-    ax1 = plt.subplot(3,1,2)
-    ax1.plot(f[:samples],x_imag[:samples], '*-')   
+    ax1 = plt.subplot(3, 1, 2)
+    ax1.plot(f[:samples], x_imag[:samples], '*-')
     ax1.set_title('time img')
 
-    ax2 = plt.subplot(3,2,5)
-    ax2.plot(f,abs_x)   
+    ax2 = plt.subplot(3, 2, 5)
+    ax2.plot(f, abs_x)
     ax2.set_title('freq')
-    
-    ax3 = plt.subplot(3,2,6)
-    ax3.plot(f,angle_x)   
+
+    ax3 = plt.subplot(3, 2, 6)
+    ax3.plot(f, angle_x)
     ax3.set_title('phase')
     plt.show()
     if not filename is None:
@@ -62,45 +62,44 @@ class TorchComplex:
     @staticmethod
     def abs(tensor):
         shape = tensor.shape
-        if len(shape)>1:
+        if len(shape) > 1:
             tensor = tensor.view(-1, 2)
-            tensor_abs = (tensor[:, 0]**2 + tensor[:, 1]**2)**0.5
+            tensor_abs = (tensor[:, 0] ** 2 + tensor[:, 1] ** 2) ** 0.5
             return tensor_abs.view(*shape[:-1])
         else:
-            return (tensor[0]**2 + tensor[1]**2)**0.5
+            return (tensor[0] ** 2 + tensor[1] ** 2) ** 0.5
 
     @staticmethod
     def phase(tensor):
         shape = tensor.shape
-        if len(shape)>1:
+        if len(shape) > 1:
             tensor = tensor.view(-1, 2)
-            return torch.atan(tensor[:, 1]/tensor[:, 0]).view(*shape[:-1])
+            return torch.atan(tensor[:, 1] / tensor[:, 0]).view(*shape[:-1])
         else:
-            return torch.atan(tensor[1]/tensor[0])
+            return torch.atan(tensor[1] / tensor[0])
 
     @staticmethod
     def phase_np(tensor):
         shape = tensor.shape
-        if len(shape)>1:
+        if len(shape) > 1:
             tensor = tensor.view(-1, 2)
-            return np.angle(tensor[:, 0].numpy()+ tensor[:, 1].numpy()*1j)
+            return np.angle(tensor[:, 0].numpy() + tensor[:, 1].numpy() * 1j)
         else:
-            return np.angle(tensor[0].item()+ tensor[1].item()*1j)
-
+            return np.angle(tensor[0].item() + tensor[1].item() * 1j)
 
     @staticmethod
     def energy(tensor, keep_batch=True):
         if not keep_batch:
             tensor = tensor.view(-1, 2)
-            return torch.sum(tensor[:, 0]**2 + tensor[:, 1]**2)
+            return torch.sum(tensor[:, 0] ** 2 + tensor[:, 1] ** 2)
         else:
             N = len(tensor)
             tensor = tensor.view(N, -1, 2)
-            return torch.sum(tensor[:, :, 0]**2 + tensor[:, :, 1]**2, dim=1)
+            return torch.sum(tensor[:, :, 0] ** 2 + tensor[:, :, 1] ** 2, dim=1)
 
     @staticmethod
     def power(tensor):
-        return torch.sqrt(torch.mean(tensor[:, 0]**2 + tensor[:, 1]**2))
+        return torch.sqrt(torch.mean(tensor[:, 0] ** 2 + tensor[:, 1] ** 2))
 
     @staticmethod
     def imag(tensor):
@@ -160,12 +159,12 @@ class TorchComplex:
         tensor = tensor.flatten().view(-1, 2)
         real = tensor[:, :1]
         imag = tensor[:, 1:]
-        denominator = real**2 + imag**2 + eps
-        oreal = real/denominator
-        oimag = -imag/denominator
+        denominator = real ** 2 + imag ** 2 + eps
+        oreal = real / denominator
+        oimag = -imag / denominator
         inv_tensor = torch.cat([oreal, oimag], dim=1)
         return inv_tensor.view(*shape)
-    
+
     @staticmethod
     def batch_diag(tensor):
         '''
@@ -179,7 +178,6 @@ class TorchComplex:
         # out_tensor[:, idx, idx, :] = out_tensor[:, idx, idx, :] * tensor
         out_tensor[:, idx, idx, :] = out_tensor[:, idx, idx, :] + tensor
         return out_tensor
-
 
     @staticmethod
     def exp(tensor):
@@ -239,22 +237,22 @@ class TorchComplex:
     @staticmethod
     def conj(tensor):
         shape = tensor.shape
-        tensor_temp = tensor.flatten().view(-1, 2)  
-        tensor_final = torch.cat([tensor_temp[:, :1],  -1 * tensor_temp[:, 1:]], dim=1)
+        tensor_temp = tensor.flatten().view(-1, 2)
+        tensor_final = torch.cat([tensor_temp[:, :1], -1 * tensor_temp[:, 1:]], dim=1)
         return tensor_final.view(*shape)
 
     @staticmethod
     def SNR(x, x_origin, keep_batch=False, eps=1e-12):
         px = TorchComplex.energy(x, keep_batch)
-        pn = TorchComplex.energy(x-x_origin, keep_batch)
-        return 10 * torch.log10(px/(pn + eps))
+        pn = TorchComplex.energy(x - x_origin, keep_batch)
+        return 10 * torch.log10(px / (pn + eps))
 
     @staticmethod
     def add_noise(x, noise, SNR):
         px = TorchComplex.energy(x)
         pn = TorchComplex.energy(noise)
-        pr = px/(10 ** (SNR/10))
-        noise_p = torch.sqrt(pr/pn) * noise
+        pr = px / (10 ** (SNR / 10))
+        noise_p = torch.sqrt(pr / pn) * noise
         return x + noise_p
 
     @staticmethod
@@ -263,22 +261,20 @@ class TorchComplex:
         x.shape : (N, D, 2)
         '''
         N, D, _ = x.shape
-        px = TorchComplex.energy(x, keep_batch)/D
+        px = TorchComplex.energy(x, keep_batch) / D
         if not SNR_x is None:
-            rate = 10 ** (SNR_x/10)
-            px = px/(1.0/rate+1.0)
+            rate = 10 ** (SNR_x / 10)
+            px = px / (1.0 / rate + 1.0)
         noise = torch.randn_like(x)
-        pr = px/(10 ** (SNR/10))
-        noise_p = torch.sqrt(pr/2) * noise
+        pr = px / (10 ** (SNR / 10))
+        noise_p = torch.sqrt(pr / 2) * noise
         # print(torch.sqrt(pr/2))
         return noise_p
-
-    
-
 
 
 if __name__ == "__main__":
     from OQPSK_Initialization import *
+
     a = OQPSK_2530_Detection
     # fft_plot(a[:, 0], filename='test.png')
     x = TorchComplex.array2tensor(a[:, 0]).view(1, -1, 2)
@@ -287,10 +283,10 @@ if __name__ == "__main__":
     x = torch.randn(1, 10000, 2)
     print(TorchComplex.energy(x))
     noise = TorchComplex.awgn(x, 30)
-    x_n1 = x + noise 
+    x_n1 = x + noise
     print(TorchComplex.SNR(x, x_n1, eps=0.0))
     noise = TorchComplex.awgn(x_n1, -20, SNR_x=30)
-    x_n2 = x_n1 + noise 
+    x_n2 = x_n1 + noise
     print(TorchComplex.SNR(x, x_n2, eps=0.0))
 
     # x = TorchComplex.array2tensor(a[:, 0]).view(1, -1, 2).repeat(10, 1, 1)
@@ -304,7 +300,6 @@ if __name__ == "__main__":
     # print(TorchComplex.energy(x, keep_batch=True))
     # xn2 = TorchComplex.add_noise(x, torch.randn_like(x), 40)
 
-    
     # y = torch.randn(20, 5, 3, 2)
     # x = torch.Tensor([[[[2, 3],[7,8]],[[4, 5],[9,10]]]])
     # y = torch.Tensor([[[[2, 3],[7,8]],[[4, 5],[9,10]]]])

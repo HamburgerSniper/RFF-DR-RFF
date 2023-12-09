@@ -109,6 +109,7 @@ class UNet(nn.Module):
         logits = self.outc(x)
         return logits
 
+
 class SUNet(nn.Module):
     def __init__(self, n_channels, n_classes, bilinear=True):
         super().__init__()
@@ -152,7 +153,7 @@ class SUNetZ(nn.Module):
         self.n_channels = n_channels
         self.n_classes = n_classes
         self.bilinear = bilinear
-        self.latent2hidden = nn.Linear(n_latents, 512*5)
+        self.latent2hidden = nn.Linear(n_latents, 512 * 5)
 
         self.inc = DoubleConv(n_channels, 64)
         self.down1 = Down(64, 128)
@@ -183,8 +184,9 @@ class SUNetZ(nn.Module):
         logits = logits.permute(0, 2, 3, 1).flatten().view(N, 1, T, 2)
         return logits
 
+
 if __name__ == "__main__":
     x = torch.randn(10, 1, 1280, 2)
-    z = torch.randn(10,4)
+    z = torch.randn(10, 4)
     model = SUNetZ(2, 4, 2)
     print(model(x, z).shape)
