@@ -1,6 +1,7 @@
 import os
 
 import torch
+import torch.utils.data.dataset
 
 from preprocessing import main as main_NMP
 from preprocessing_MP import main as main_MP
@@ -55,39 +56,66 @@ def FIR(x, taps=9):
     return x_FIR.view(1, N, 2)
 
 
+# 继承 Dataset 基类 意味着可以被用作pytorch中的数据加载模块的数据集
 class RFdataset(torch.utils.data.Dataset):
+    """
+        __init__()函数：构造器
+            device_ids: 一个列表 包含设备ids
+            test_ids: 一个列表 包含测试ids
+            flag: 一个字符串 表示数据集的来源 默认为'ZigBee'
+            SNR: 信噪比 如果指定了值，则会在数据集中添加噪声
+            rand_max_SNR: 随机生成的最大信噪比 如果指定了值，则会在数据集中添加随机噪声
+            is_FIR: 一个布尔值，如果为true，则需要对原始数据进行FIR滤波处理
+    """
+
     def __init__(self, device_ids, test_ids, flag='ZigBee', SNR=None, rand_max_SNR=None, is_FIR=False):
+        # 如果device_ids长度大于1，它将第一个和最后一个元素连接起来作为device_flag；否则，它只使用第一个元素作为device_flag
         if len(device_ids) > 1:
             device_flag = '{}-{}'.format(device_ids[0], device_ids[-1])
         else:
             device_flag = str(device_ids[0])
+
+        # 将test_ids列表中的每个元素转换为字符串，并用短横线('-')连接起来，得到test_flag
         test_flag = '-'.join([str(i) for i in test_ids])
+
+        # 构造了一个文件名，其中包含了flag、device_flag和test_flag。然后，它们将文件名与路径./datasets/processed/组合在一起
         file_name = '{}_dv{}_id{}.pth'.format(flag, device_flag, test_flag)
         file_name = './datasets/processed/{}'.format(file_name)
+
+        # 检查给定的文件名是否指向一个存在的文件。如果不存在，它会调用main_NMP函数，传入device_ids、test_ids和flag参数
         if not os.path.isfile(file_name):
             main_NMP(device_ids, test_ids, flag=flag)
 
+        # 加载了指定文件名的数据，并将其存储在self.data属性中
         self.data = torch.load(file_name)
 
+        # 将传入的参数SNR、rand_max_SNR和is_FIR分别赋值给self.snr、self.max_snr和self.is_FIR属性
         self.snr = SNR
         self.max_snr = rand_max_SNR
         self.is_FIR = is_FIR
 
-    def __getitem__(self, index):
+    """
+        __getitem__()方法：用于从数据集中返回特定元素，index表示返回的数据项的索引
+    """
+
+    def __getitem__(self, index, x=None):
         idx = self.data['idx'][index]
         x_origin = self.data['x_origin'][index][idx:idx + 1280, :].view(1, -1, 2).clone().detach()
         x_syn = self.data['x_fopo'][index][idx:idx + 1280, :].view(1, -1, 2).clone().detach()
         y = self.data['y'][index]
         length = self.data['length'][index]
 
+        # is_FIR为true则对原始数据进行FIR滤波处理
         if self.is_FIR:
             x_origin = FIR(x_origin)
 
+        # 如果self.snr不为None，则对x_origin、x_syn和x添加高斯白噪声，模拟不同的信噪比（SNR）条件
         if not self.snr is None:
             x_origin += tc.awgn(x_origin, self.snr, SNR_x=30)
             x_syn += tc.awgn(x_syn, self.snr, SNR_x=30)
             x += tc.awgn(x, self.snr, SNR_x=30)
 
+        # 如果self.max_snr不为None，则随机生成一个介于5到se`lf.max_snr之间的SNR值，并添加到x_origin和x_syn中
         if not self.max_snr is None:
             rand_snr = torch.randint(5, self.max_snr, (1,)).item()
             x_origin += tc.awgn(x_origin, rand_snr, SNR_x=30)

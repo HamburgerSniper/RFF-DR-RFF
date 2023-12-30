@@ -294,7 +294,7 @@ class Trainer(mt.BaseTrainer, Confs):
         return is_best
 
 
-if __name__ == '__main__':
+if __name__ == '__main__': 
     ## DR-RFF
     trainer = Trainer(train_snr=None,
                       device=0, d2=18, z_dim=512,

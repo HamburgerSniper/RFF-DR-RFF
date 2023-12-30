@@ -3,8 +3,8 @@ from scipy.io import loadmat as load
 
 is_debug = False
 if not is_debug:
-    from .OQPSK_Initialization import *
-    from .utils import TorchComplex as tc
+    from OQPSK_Initialization import *
+    from utils import TorchComplex as tc
 else:
     from OQPSK_Initialization import *
     from utils import TorchComplex as tc
