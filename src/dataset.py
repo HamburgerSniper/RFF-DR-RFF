@@ -63,7 +63,7 @@ class RFdataset(torch.utils.data.Dataset):
             device_flag = '{}-{}'.format(device_ids[0], device_ids[-1])
         else:
             device_flag = str(device_ids[0])
-
+        # 匹配datasets文件夹中的pth数据集文件路径，作为模型训练的数据输入
         test_flag = '-'.join([str(i) for i in test_ids])
         file_name = '{}_dv{}_id{}.pth'.format(flag, device_flag, test_flag)
         file_name = './datasets/processed/{}'.format(file_name)
