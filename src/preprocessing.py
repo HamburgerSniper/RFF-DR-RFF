@@ -2,8 +2,8 @@ import torch
 from scipy.io import loadmat as load
 from torch.nn.utils.rnn import pad_sequence
 
-from .OQPSK_Initialization import *
-from .utils import TorchComplex as tc
+from OQPSK_Initialization import *
+from utils import TorchComplex as tc
 
 
 def freq_compensation_batch(

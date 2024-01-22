@@ -3,9 +3,9 @@ import os
 import torch
 import torch.utils.data.dataset
 
-from .preprocessing import main as main_NMP
-from .preprocessing_MP import main as main_MP
-from .utils import TorchComplex as tc
+from preprocessing import main as main_NMP
+from preprocessing_MP import main as main_MP
+from utils import TorchComplex as tc
 
 """
     FIR 滤波器实现：FIR滤波器是一种线性时不变的滤波器，其冲激响应在时域上是有限的,通过将输入信号与滤波器的系数进行线性卷积运算，对输入信号进行滤波处理。
