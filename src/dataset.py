@@ -56,18 +56,8 @@ def FIR(x, taps=9):
     return x_FIR.view(1, N, 2)
 
 
-# 继承 Dataset 基类 意味着可以被用作pytorch中的数据加载模块的数据集
 class RFdataset(torch.utils.data.Dataset):
-    """
-        __init__()函数：构造器
-            device_ids: 一个列表 包含设备ids
-            test_ids: 一个列表 包含测试ids
-            flag: 一个字符串 表示数据集的来源 默认为'ZigBee'
-            SNR: 信噪比 如果指定了值，则会在数据集中添加噪声
-            rand_max_SNR: 随机生成的最大信噪比 如果指定了值，则会在数据集中添加随机噪声
-            is_FIR: 一个布尔值，如果为true，则需要对原始数据进行FIR滤波处理
-    """
-
+    # 读取数据 -- device_ids: 一个列表 包含设备ids ; test_ids: 一个列表 包含测试ids ; flag: 一个字符串 表示数据集的来源 默认为'ZigBee'
     def __init__(self, device_ids, test_ids, flag='ZigBee', SNR=None, rand_max_SNR=None, is_FIR=False):
         if len(device_ids) > 1:
             device_flag = '{}-{}'.format(device_ids[0], device_ids[-1])
