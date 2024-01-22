@@ -11,25 +11,32 @@ class Confs(mt.BaseConfs):
     def __init__(self, train_snr,
                  device=0, d1=None, d2=None, z_dim=32, lamda=1.0, alpha=1.0, beta=1.0, epsilon=0.0, is_NS=False,
                  is_HP=True, is_swap=True, is_FIR=False, is_TS=False):
+        # 训练信噪比
         self.train_snr = train_snr
+        # 设备编号
         self.device = device
         self.device_ids = [device]
         self.d1 = d1
         self.d2 = d2
+        # 潜变量维度
         self.z_dim = z_dim
         self.lamda = lamda
         self.alpha = alpha
         self.beta = beta
         self.epsilon = epsilon
+        # 是否启用噪声
         self.is_NS = is_NS
+        # HighPass高通
         self.is_HP = is_HP
         self.is_FIR = is_FIR
+        # 是否 时间序列
         self.is_TS = is_TS
         self.is_swap = is_swap
         super().__init__()
 
     def get_dataset(self):
         self.dataset = 'val'
+        # 通道数
         self.nc = 2
         self.batch_size = 256
         self.class_num = 54

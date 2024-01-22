@@ -49,7 +49,7 @@ def inter_intra_dist(features, labels, metric='cosine', other_features=None):
         label_repeat = np.tile(labels, (len(labels), 1))
         itself_dist = np.eye(len(labels))
         intra_dist_mask = ((label_repeat == label_repeat.T) -
-                           itself_dist).astype(np.bool)
+                           itself_dist).astype(np.bool_)
         inter_dist_mask = label_repeat != label_repeat.T
 
         distance = pairwise_distances(features, metric=metric)

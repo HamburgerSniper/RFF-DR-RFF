@@ -1,10 +1,10 @@
 is_debug = False
 if not is_debug:
-    from ZigBee_processing import *
-    from ArcFace import *
+    from .ZigBee_processing import *
+    from .ArcFace import *
 else:
-    from ZigBee_processing import *
-    from ArcFace import *
+    from .ZigBee_processing import *
+    from .ArcFace import *
 
 
 class NormalizedModel(nn.Module):

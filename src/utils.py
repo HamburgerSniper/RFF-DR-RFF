@@ -58,6 +58,7 @@ class TorchComplex:
     def __init__(self):
         pass
 
+    # 计算负数张量的绝对值
     @staticmethod
     def abs(tensor):
         shape = tensor.shape
@@ -68,6 +69,7 @@ class TorchComplex:
         else:
             return (tensor[0] ** 2 + tensor[1] ** 2) ** 0.5
 
+    # 计算复数张量的相位。同样，如果张量是二维的，假设形状为 (N, 2)，则按照复数的定义计算每个复数的相位
     @staticmethod
     def phase(tensor):
         shape = tensor.shape
@@ -77,6 +79,8 @@ class TorchComplex:
         else:
             return torch.atan(tensor[1] / tensor[0])
 
+    # 计算复数张量的相位。同样，如果张量是二维的，假设形状为 (N, 2)，则按照复数的定义计算每个复数的相位
+    # 但返回的是 NumPy 数组形式的相位
     @staticmethod
     def phase_np(tensor):
         shape = tensor.shape
@@ -86,6 +90,7 @@ class TorchComplex:
         else:
             return np.angle(tensor[0].item() + tensor[1].item() * 1j)
 
+    # 计算复数张量的能量。如果 keep_batch 为 True，则对每个样本计算能量，否则将所有样本的能量合并。
     @staticmethod
     def energy(tensor, keep_batch=True):
         if not keep_batch:
@@ -96,18 +101,22 @@ class TorchComplex:
             tensor = tensor.view(N, -1, 2)
             return torch.sum(tensor[:, :, 0] ** 2 + tensor[:, :, 1] ** 2, dim=1)
 
+    # 计算复数张量的功率。在这里，功率定义为平均能量
     @staticmethod
     def power(tensor):
         return torch.sqrt(torch.mean(tensor[:, 0] ** 2 + tensor[:, 1] ** 2))
 
+    #  获取复数张量的虚部
     @staticmethod
     def imag(tensor):
         return tensor[:, 1]
 
+    # 获取复数张量的实部
     @staticmethod
     def real(tensor):
         return tensor[:, 0]
 
+    # 将 NumPy 数组转换为 PyTorch 复数张量
     @staticmethod
     def array2tensor(array):
         shape = array.shape
@@ -116,6 +125,7 @@ class TorchComplex:
         tensor = torch.cat([real, imag], dim=1)
         return tensor.view(*shape, 2)
 
+    # 将 Python 复数转换为 PyTorch 复数张量。
     @staticmethod
     def complex2tensor(complex_num):
         real = torch.FloatTensor([complex_num.real]).view(-1, 1)
@@ -123,6 +133,7 @@ class TorchComplex:
         tensor = torch.cat([real, imag], dim=1)
         return tensor
 
+    # 将 PyTorch 复数张量转换为 NumPy 数组
     @staticmethod
     def tensor2array(tensor):
         shape = tensor.shape
@@ -132,6 +143,7 @@ class TorchComplex:
         array = real + imag * 1j
         return np.reshape(array, shape[:-1])
 
+    # 将实部为给定数组的虚部全为零的复数张量
     @staticmethod
     def real_array2tensor(array):
         real = torch.FloatTensor(array).view(-1, 1)
@@ -139,6 +151,7 @@ class TorchComplex:
         tensor = torch.cat([real, imag], dim=1)
         return tensor
 
+    #  对复数数组进行指数运算
     @staticmethod
     def array_exp(array):
         real = torch.Tensor(array.real)
@@ -148,6 +161,7 @@ class TorchComplex:
         exp_imag_sin = torch.sin(imag) * exp_real
         return torch.cat([exp_imag_cos, exp_imag_sin], dim=1)
 
+    # 计算每个元素的复数的倒数
     @staticmethod
     def element_inverse(tensor, eps=1e-12):
         '''
@@ -164,6 +178,7 @@ class TorchComplex:
         inv_tensor = torch.cat([oreal, oimag], dim=1)
         return inv_tensor.view(*shape)
 
+    # 生成由给定对角元素组成的批次对角矩阵
     @staticmethod
     def batch_diag(tensor):
         '''
@@ -178,6 +193,7 @@ class TorchComplex:
         out_tensor[:, idx, idx, :] = out_tensor[:, idx, idx, :] + tensor
         return out_tensor
 
+    # 对复数张量进行指数运算
     @staticmethod
     def exp(tensor):
         shape = tensor.shape
@@ -189,6 +205,7 @@ class TorchComplex:
         exp_imag_sin = torch.sin(imag) * exp_real
         return torch.cat([exp_imag_cos, exp_imag_sin], dim=1).view(*shape)
 
+    # 计算两个复数张量的逐元素乘积
     @staticmethod
     def prod(tensor0, tensor1):
         shape = tensor0.shape
@@ -199,6 +216,7 @@ class TorchComplex:
         result = torch.cat([result_real.view(-1, 1), result_imag.view(-1, 1)], dim=1)
         return result.view(*shape)
 
+    # 计算两个复数矩阵的矩阵乘法
     @staticmethod
     def mm(tensor0, tensor1):
         shape0 = tensor0.shape
@@ -216,6 +234,7 @@ class TorchComplex:
         result = torch.stack([real, imag], dim=-1)
         return result
 
+    # 计算两个批次的复数矩阵的批次矩阵乘法
     @staticmethod
     def bmm(tensor0, tensor1):
         shape0 = tensor0.shape
@@ -233,6 +252,7 @@ class TorchComplex:
         result = torch.stack([real, imag], dim=-1)
         return result
 
+    # 计算复数张量的共轭
     @staticmethod
     def conj(tensor):
         shape = tensor.shape
@@ -240,12 +260,14 @@ class TorchComplex:
         tensor_final = torch.cat([tensor_temp[:, :1], -1 * tensor_temp[:, 1:]], dim=1)
         return tensor_final.view(*shape)
 
+    # 计算信噪比
     @staticmethod
     def SNR(x, x_origin, keep_batch=False, eps=1e-12):
         px = TorchComplex.energy(x, keep_batch)
         pn = TorchComplex.energy(x - x_origin, keep_batch)
         return 10 * torch.log10(px / (pn + eps))
 
+    # 给信号添加噪声以达到指定信噪比
     @staticmethod
     def add_noise(x, noise, SNR):
         px = TorchComplex.energy(x)
@@ -254,6 +276,7 @@ class TorchComplex:
         noise_p = torch.sqrt(pr / pn) * noise
         return x + noise_p
 
+    # 添加白噪声以达到指定信噪比
     @staticmethod
     def awgn(x, SNR, keep_batch=True, SNR_x=None):
         '''
