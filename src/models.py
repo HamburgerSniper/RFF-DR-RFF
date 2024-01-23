@@ -1,3 +1,6 @@
+import sys
+sys.path.append("/home/liuxuanchen/codings/pythonproject/RFF-DR-RFF/src/")
+
 is_debug = False
 if not is_debug:
     from ZigBee_processing import *

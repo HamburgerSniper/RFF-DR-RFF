@@ -1,6 +1,10 @@
 import marveltoolbox as mt
 import torchvision as tv
 
+import sys
+
+sys.path.append("/home/liuxuanchen/codings/pythonproject/RFF-DR-RFF/src/")
+
 from src.Unet import SUNet, SUNetZ
 from src.dataset import *
 from src.evaluation import *
@@ -301,7 +305,7 @@ class Trainer(mt.BaseTrainer, Confs):
         return is_best
 
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     ## DR-RFF
     trainer = Trainer(train_snr=None,
                       device=0, d2=18, z_dim=512,

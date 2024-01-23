@@ -1,14 +1,17 @@
 import torch
 
+import sys
+sys.path.append("/home/liuxuanchen/codings/pythonproject/RFF-DR-RFF/src/")
+
 is_debug = False
 if is_debug:
     from OQPSK_Initialization import *
     from utils import TorchComplex as tc
     from utils import fft_plot
 else:
-    from .OQPSK_Initialization import *
-    from .utils import TorchComplex as tc
-    from .utils import fft_plot
+    from OQPSK_Initialization import *
+    from utils import TorchComplex as tc
+    from utils import fft_plot
 
 OQPSK_2530_SHR_SYM_SAMPLE = OQPSK_2530_SHR_Symbol_Sample[:, 0]
 OQPSK_2530_SHR_SYM_SAMPLE = tc.array2tensor(OQPSK_2530_SHR_SYM_SAMPLE)
