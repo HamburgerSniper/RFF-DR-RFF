@@ -66,16 +66,15 @@ class RFdataset(torch.utils.data.Dataset):
         # 匹配datasets文件夹中的pth数据集文件路径，作为模型训练的数据输入
         test_flag = '-'.join([str(i) for i in test_ids])
         file_name = '{}_dv{}_id{}.pth'.format(flag, device_flag, test_flag)
-        file_name = './datasets/processed/{}'.format(file_name)
-
+        # file_name = './datasets/processed/{}'.format(file_name)
+        file_name = os.path.abspath("/home/liuxuanchen/codings/pythonproject/RFF-DR-RFF/datasets/processed/{}".format(file_name))
         if not os.path.isfile(file_name):
             main_NMP(device_ids, test_ids, flag=flag)
 
-        self.data = torch.load(file_name) # 数据集
-        self.snr = SNR # 信噪比
-        self.max_snr = rand_max_SNR # 随机生成的最大信噪比
-        self.is_FIR = is_FIR # 是否需要对原始数据进行FIR滤波处理
-
+        self.data = torch.load(file_name)  # 数据集
+        self.snr = SNR  # 信噪比
+        self.max_snr = rand_max_SNR  # 随机生成的最大信噪比
+        self.is_FIR = is_FIR  # 是否需要对原始数据进行FIR滤波处理
 
     def __getitem__(self, index, x=None):
         idx = self.data['idx'][index]
@@ -114,11 +113,10 @@ class RFdataset_MP(torch.utils.data.Dataset):
             device_flag = str(device_ids[0])
         test_flag = '-'.join([str(i) for i in test_ids])
         file_name = '{}_dv{}_channel{}.pth'.format(flag, device_flag, test_flag)
-        file_name = './datasets/processed/{}'.format(file_name)
+        file_name = os.path.abspath("/home/liuxuanchen/codings/pythonproject/RFF-DR-RFF/datasets/processed/{}".format(file_name))
         if not os.path.isfile(file_name):
             main_MP(device_ids, test_ids, flag=flag)
         self.data = torch.load(file_name)
-
         self.snr = SNR
         self.max_snr = rand_max_SNR
 
@@ -147,16 +145,16 @@ if __name__ == "__main__":
     test = RFdataset_MP(device_ids=range(5), test_ids=[1, 2, 3], rand_max_SNR=None)
     print(len(test))
     print(test[0][0].shape)
-    # min_freq = 1000000
-    # max_freq = -1000000
-    # sum_freq = 0.0
-    # for i in range(len(test)):
-    #     freq = test[i][0]
-    #     if freq.max() > max_freq:
-    #         max_freq = freq.max()
-    #     if freq.min() < min_freq:
-    #         min_freq = freq.min()
-    #     sum_freq += freq.mean()
-    # print(max_freq)
-    # print(min_freq)
-    # print(sum_freq/len(test))
+    min_freq = 1000000
+    max_freq = -1000000
+    sum_freq = 0.0
+    for i in range(len(test)):
+        freq = test[i][0]
+        if freq.max() > max_freq:
+            max_freq = freq.max()
+        if freq.min() < min_freq:
+            min_freq = freq.min()
+        sum_freq += freq.mean()
+    print(max_freq)
+    print(min_freq)
+    print(sum_freq/len(test))
