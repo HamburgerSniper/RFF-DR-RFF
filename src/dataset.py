@@ -2,6 +2,8 @@ import os
 
 import torch
 import torch.utils.data.dataset
+import matplotlib.pyplot as plt
+import numpy as np
 
 from preprocessing import main as main_NMP
 from preprocessing_MP import main as main_MP
@@ -67,7 +69,8 @@ class RFdataset(torch.utils.data.Dataset):
         test_flag = '-'.join([str(i) for i in test_ids])
         file_name = '{}_dv{}_id{}.pth'.format(flag, device_flag, test_flag)
         # file_name = './datasets/processed/{}'.format(file_name)
-        file_name = os.path.abspath("/home/liuxuanchen/codings/pythonproject/RFF-DR-RFF/datasets/processed/{}".format(file_name))
+        file_name = os.path.abspath(
+            "/home/liuxuanchen/codings/pythonproject/RFF-DR-RFF/datasets/processed/{}".format(file_name))
         if not os.path.isfile(file_name):
             main_NMP(device_ids, test_ids, flag=flag)
 
@@ -78,29 +81,29 @@ class RFdataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index, x=None):
         idx = self.data['idx'][index]
+        # 截取一个idx到idx+1280的子集，表示原始数据的一个片段 并 数据变形为(1,640,2)的张量，并创建深层副本以确保对原始数据没有副作用
         x_origin = self.data['x_origin'][index][idx:idx + 1280, :].view(1, -1, 2).clone().detach()
         x_syn = self.data['x_fopo'][index][idx:idx + 1280, :].view(1, -1, 2).clone().detach()
+        # 样本的标签
         y = self.data['y'][index]
         length = self.data['length'][index]
-
         # is_FIR为true则对原始数据进行FIR滤波处理
         if self.is_FIR:
             x_origin = FIR(x_origin)
-
         # 如果self.snr不为None，则对x_origin、x_syn和x添加高斯白噪声，模拟不同的信噪比（SNR）条件
         if not self.snr is None:
             x_origin += tc.awgn(x_origin, self.snr, SNR_x=30)
             x_syn += tc.awgn(x_syn, self.snr, SNR_x=30)
             x += tc.awgn(x, self.snr, SNR_x=30)
-
-        # 如果self.max_snr不为None，则随机生成一个介于5到se`lf.max_snr之间的SNR值，并添加到x_origin和x_syn中
+        # 如果self.max_snr不为None，则随机生成一个介于5到self.max_snr之间的SNR值，并添加到x_origin和x_syn中
         if not self.max_snr is None:
             rand_snr = torch.randint(5, self.max_snr, (1,)).item()
             x_origin += tc.awgn(x_origin, rand_snr, SNR_x=30)
             x_syn += tc.awgn(x_syn, rand_snr, SNR_x=30)
-
+        # x_origin是原始信号，y是样本标签，x_syn是合成数据
         return x_origin, y, x_syn
 
+    # 返回数据集总长度
     def __len__(self):
         return len(self.data['y'])
 
@@ -113,7 +116,8 @@ class RFdataset_MP(torch.utils.data.Dataset):
             device_flag = str(device_ids[0])
         test_flag = '-'.join([str(i) for i in test_ids])
         file_name = '{}_dv{}_channel{}.pth'.format(flag, device_flag, test_flag)
-        file_name = os.path.abspath("/home/liuxuanchen/codings/pythonproject/RFF-DR-RFF/datasets/processed/{}".format(file_name))
+        file_name = os.path.abspath(
+            "/home/liuxuanchen/codings/pythonproject/RFF-DR-RFF/datasets/processed/{}".format(file_name))
         if not os.path.isfile(file_name):
             main_MP(device_ids, test_ids, flag=flag)
         self.data = torch.load(file_name)
@@ -157,4 +161,24 @@ if __name__ == "__main__":
         sum_freq += freq.mean()
     print(max_freq)
     print(min_freq)
-    print(sum_freq/len(test))
+    print(sum_freq / len(test))
+    # 获取数据集的标签
+    labels = test.data['y']
+    # 统计每个类别的样本数量
+    unique_labels, counts = np.unique(labels, return_counts=True)
+    colors = ['red', 'green', 'blue', 'yellow', 'cyan', 'magenta', 'black', 'pink', 'orange', 'brown']
+    # 绘制直方图
+    plt.figure()
+    plt.bar(unique_labels, counts, tick_label=unique_labels, color=colors)
+    plt.xlabel('Label')
+    plt.ylabel('Count')
+    plt.title('Label Distribution in the Dataset')
+    for i, count in enumerate(counts):
+        plt.text(unique_labels[i], count + 0.1, str(count), color='black', fontweight='bold', ha='center', va='bottom')
+
+    # plt.figure()
+    # plt.pie(counts, labels=unique_labels, autopct='%1.1f%%', color=colors)
+    # plt.axis('equal')  # 保持饼图是圆形
+    # plt.title('Label Distribution in the Dataset')
+
+    plt.show()
