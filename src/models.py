@@ -9,7 +9,7 @@ else:
     from ZigBee_processing import *
     from ArcFace import *
 
-
+# 归一化模型
 class NormalizedModel(nn.Module):
     def __init__(self) -> None:
         super(NormalizedModel, self).__init__()
@@ -17,12 +17,14 @@ class NormalizedModel(nn.Module):
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         # mean = input.mean(dim=2, keepdim=True).repeat(1, 1, 1280, 1)
         # std = input.std(dim=2, keepdim=True).repeat(1, 1, 1280, 1)
+        # 计算均值mean和标准差std
         mean = input.mean()
         std = input.std()
         normalized_input = (input - mean) / std
         return normalized_input
 
-
+# 分类器
+# 归一化 + 卷积/池化/激活 * 3 + 全连接层 输出output为10个类别
 class BaseCLF(nn.Module):
     def __init__(self, in_channels=1, out_channels=10, d=64):
         super().__init__()
@@ -61,7 +63,8 @@ class BaseCLF(nn.Module):
         out = self.main_module(input).view(N, -1)
         return out
 
-
+# 分类器
+# 取消全连接层 通过卷积层直接产生输出分类，更适用于时间序列数据
 class BaseCLF2(nn.Module):
     def __init__(self, in_channels=2, out_dim=1, d=4):
         super().__init__()
@@ -117,7 +120,88 @@ class BaseCLF2(nn.Module):
         out = self.main_module(input_img).view(N, -1)
         return out
 
+class BaseCLF4(nn.Module):
+    def __init__(self, in_channels=2, out_dim=1, d=4):
+        super().__init__()
+        self.d = d
 
+        # Define residual block
+        self.resblock = nn.Sequential(
+            nn.Conv2d(in_channels=self.d * 4, out_channels=self.d * 4, kernel_size=(3, 3), stride=1, padding=(1, 1)),
+            nn.BatchNorm2d(self.d * 4),
+            nn.LeakyReLU(0.2),
+            nn.Conv2d(in_channels=self.d * 4, out_channels=self.d * 4, kernel_size=(3, 3), stride=1, padding=(1, 1)),
+            nn.BatchNorm2d(self.d * 4)
+        )
+
+        # Define attention mechanism
+        self.attention = nn.Sequential(
+            nn.Conv2d(in_channels=self.d * 16, out_channels=self.d * 16, kernel_size=(1, 1), stride=1, padding=(0, 0)),
+            nn.Softmax(dim=2)
+        )
+
+        self.main_module = nn.Sequential(
+            # Image (2x16x80)
+            nn.Conv2d(in_channels=in_channels, out_channels=self.d, kernel_size=(3, 3), stride=1, padding=(1, 1)),
+            nn.BatchNorm2d(self.d),
+            nn.LeakyReLU(0.2),
+
+            # State (dx16x80)
+            nn.Conv2d(in_channels=self.d, out_channels=self.d * 2, kernel_size=(3, 3), stride=1, padding=(1, 1)),
+            nn.BatchNorm2d(self.d * 2),
+            nn.LeakyReLU(0.2),
+
+            # State (2dx16x80)
+            nn.Conv2d(in_channels=self.d * 2, out_channels=self.d * 4, kernel_size=(3, 3), stride=2, padding=(1, 1)),
+            nn.BatchNorm2d(self.d * 4),
+            nn.LeakyReLU(0.2),
+
+            # State (4dx8x40)
+            nn.Conv2d(in_channels=self.d * 4, out_channels=self.d * 8, kernel_size=(3, 3), stride=1, padding=(1, 1)),
+            nn.BatchNorm2d(self.d * 8),
+            nn.LeakyReLU(0.2),
+
+            # State (8dx8x40)
+            nn.Conv2d(in_channels=self.d * 8, out_channels=self.d * 16, kernel_size=(3, 3), stride=2, padding=(1, 1)),
+            nn.BatchNorm2d(self.d * 16),
+            nn.LeakyReLU(0.2),
+
+            # State (16dx4x20)
+            nn.Conv2d(in_channels=self.d * 16, out_channels=self.d * 32, kernel_size=(3, 3), stride=2, padding=(1, 1)),
+            nn.BatchNorm2d(self.d * 32),
+            nn.LeakyReLU(0.2),
+
+            # State (32dx2x10)
+            nn.Conv2d(in_channels=self.d * 32, out_channels=self.d * 16, kernel_size=(3, 3), stride=1, padding=(1, 1)),
+            nn.BatchNorm2d(self.d * 16),
+            nn.LeakyReLU(0.2),
+
+            # Residual block
+            self.resblock,
+
+            # Attention mechanism
+            self.attention,
+
+            # Global average pooling
+            nn.AdaptiveAvgPool2d(1)
+        )
+
+        # Fully connected layer for classification
+        self.fc = nn.Linear(self.d * 16, out_dim)
+
+    def forward(self, input, labels=None):
+        out = self.features(input)
+        out = self.fc(out)
+        return out
+
+    def features(self, input):
+        N, _, T, _ = input.shape
+        input_img = input.view(N, 1, T, 2).permute(0, 3, 1, 2).flatten().view(N, -1, 16, 80)
+        out = self.main_module(input_img).view(N, -1)
+        return out
+
+# 分类器
+# 全连接层分类
 class BaseCLF3(nn.Module):
     def __init__(self, in_channels=2, out_channels=1, d=4):
         super().__init__()
@@ -173,7 +257,7 @@ class BaseCLF3(nn.Module):
         out = self.main_module(input_img).view(N, -1)
         return out
 
-
+# 频率预处理 - 频偏估计/频率补偿
 class Freq_processing(nn.Module):
     def __init__(self):
         super().__init__()
@@ -186,6 +270,8 @@ class Freq_processing(nn.Module):
         return out, freq
 
 
+
+# 相位预处理 - 相位偏移估计/相位补偿
 class Phase_processing(nn.Module):
     def __init__(self):
         super().__init__()
