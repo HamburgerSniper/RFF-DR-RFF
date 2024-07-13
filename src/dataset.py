@@ -69,7 +69,8 @@ class RFdataset(torch.utils.data.Dataset):
         test_flag = '-'.join([str(i) for i in test_ids])
         file_name = '{}_dv{}_id{}.pth'.format(flag, device_flag, test_flag)
         # file_name = './datasets/processed/{}'.format(file_name)
-        file_name = os.path.abspath("/home/liuxuanchen/codings/pythonproject/RFF-DR-RFF/datasets/processed/{}".format(file_name))
+        file_name = os.path.abspath(
+            "/home/liuxuanchen/codings/pythonproject/RFF-DR-RFF/datasets/processed/{}".format(file_name))
         if not os.path.isfile(file_name):
             main_NMP(device_ids, test_ids, flag=flag)
 
@@ -115,7 +116,8 @@ class RFdataset_MP(torch.utils.data.Dataset):
             device_flag = str(device_ids[0])
         test_flag = '-'.join([str(i) for i in test_ids])
         file_name = '{}_dv{}_channel{}.pth'.format(flag, device_flag, test_flag)
-        file_name = os.path.abspath("/home/liuxuanchen/codings/pythonproject/RFF-DR-RFF/datasets/processed/{}".format(file_name))
+        file_name = os.path.abspath(
+            "/home/liuxuanchen/codings/pythonproject/RFF-DR-RFF/datasets/processed/{}".format(file_name))
         if not os.path.isfile(file_name):
             main_MP(device_ids, test_ids, flag=flag)
         self.data = torch.load(file_name)

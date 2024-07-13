@@ -1,6 +1,7 @@
 import marveltoolbox as mt
 import torchvision as tv
 
+import datetime
 import sys
 
 sys.path.append("/home/liuxuanchen/codings/pythonproject/RFF-DR-RFF/src/")
@@ -12,39 +13,33 @@ from src.models import *
 
 
 class Confs(mt.BaseConfs):
-    def __init__(self, train_snr,
-                 device=0, d1=None, d2=None, z_dim=32, lamda=1.0, alpha=1.0, beta=1.0, epsilon=0.0, is_NS=False,
-                 is_HP=True, is_swap=True, is_FIR=False, is_TS=False):
-        # 训练信噪比
-        self.train_snr = train_snr
-        # 设备编号
-        self.device = device
+    def __init__(self, train_snr, device=0, d1=None, d2=None,
+                 z_dim=32, lamda=1.0, alpha=1.0, beta=1.0, epsilon=0.0,
+                 is_NS=False, is_HP=True, is_swap=True, is_FIR=False, is_TS=False):
+        self.train_snr = train_snr  # 训练信噪比
+        self.device = device  # 设备编号
         self.device_ids = [device]
         self.d1 = d1
         self.d2 = d2
-        # 潜变量维度
-        self.z_dim = z_dim
+
+        self.z_dim = z_dim  # 潜在空间维度
         self.lamda = lamda
         self.alpha = alpha
         self.beta = beta
         self.epsilon = epsilon
-        # 是否启用噪声
-        self.is_NS = is_NS
-        # HighPass高通
-        self.is_HP = is_HP
-        self.is_FIR = is_FIR
-        # 是否 时间序列
-        self.is_TS = is_TS
-        self.is_swap = is_swap
+        self.is_NS = is_NS  # 是否启用噪声
+        self.is_HP = is_HP  # HighPass高通
+        self.is_FIR = is_FIR  # 是否使用FIR滤波器
+        self.is_TS = is_TS  # 是否 时间序列
+        self.is_swap = is_swap  # 是否打乱
         super().__init__()
 
     def get_dataset(self):
         self.dataset = 'val'
-        # 通道数
-        self.nc = 2
-        self.batch_size = 256
+        self.nc = 2  # 通道数
+        self.batch_size = 8
         self.class_num = 54
-        self.epochs = 50
+        self.epochs = 25
         self.max_iter = 10
         self.seed = 0
 
@@ -54,9 +49,12 @@ class Confs(mt.BaseConfs):
         else:
             self.data_idx = 0
 
-        self.flag = 'DR-RFF-{}-snr{}-nz{}-L{}-lamda{}-alpha{}-beta{}-eps{}'.format(
+        self.flag = '{}-DR-RFF-{}-snr{}-nz{}-L{}-lamda{}-alpha{}-beta{}-eps{}-batchSize{}-epoch{}'.format(
+            datetime.datetime.now().strftime('%Y%m%d-%H%M'),
             self.dataset, self.train_snr, self.z_dim,
-            self.d2, self.lamda, self.alpha, self.beta, self.epsilon)
+            self.d2, self.lamda, self.alpha, self.beta, self.epsilon,
+            self.batch_size, self.epochs
+        )
         if self.is_NS:
             self.flag += '-NS'
         if self.is_TS:
@@ -69,9 +67,7 @@ class Confs(mt.BaseConfs):
             self.flag += '-noswap'
 
     def get_device(self):
-        self.device = torch.device(
-            "cuda:{}".format(self.device) if \
-                torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda:{}".format(self.device) if torch.cuda.is_available() else "cpu")
 
 
 class Trainer(mt.BaseTrainer, Confs):
@@ -97,16 +93,13 @@ class Trainer(mt.BaseTrainer, Confs):
         else:
             self.models['F'] = CLF_Softmax(in_channels=self.nc, out_channels=self.class_num, d1=self.d1, d2=self.d2,
                                            z_dim=self.z_dim).to(self.device)
-
         self.models['Q'] = SUNet(self.nc, self.nc).to(device)
         self.models['G'] = SUNetZ(self.nc, self.z_dim, self.nc).to(device)
 
         self.optims['F'] = torch.optim.Adam(
             self.models['F'].parameters(), lr=1e-3, betas=(0.9, 0.990))
-
         self.optims['Q'] = torch.optim.Adam(
             self.models['Q'].parameters(), lr=1e-3, betas=(0.9, 0.999))
-
         self.optims['G'] = torch.optim.Adam(
             self.models['G'].parameters(), lr=1e-3, betas=(0.9, 0.999))
 
@@ -125,6 +118,7 @@ class Trainer(mt.BaseTrainer, Confs):
         self.eval_sets['M3'] = RFdataset_MP(device_ids=range(5), test_ids=[1, 2, 3], rand_max_SNR=None)
 
         self.preprocessing()
+
         for key in self.dataloaders.keys():
             self.records[key] = {}
             self.records[key]['acc'] = 0.0
@@ -234,7 +228,9 @@ class Trainer(mt.BaseTrainer, Confs):
                         self.signal2image(x2[:8])[:, 0:1, :, :],
                     ], dim=0)
 
-                    tv.utils.save_image(images, './plots/vis.png', nrow=8)
+                    tv.utils.save_image(images,
+                                        'plots/{}-vis.png'.format(datetime.datetime.now().strftime('%Y%m%d-%H%M'), ),
+                                        nrow=8)
 
         self.eval(epoch, eval_dataset='M3', mode=None, is_record=True)
         return 0.0
@@ -316,12 +312,13 @@ if __name__ == '__main__':
     #                 device=0, d2=18, z_dim=512, 
     #                 lamda=0.0, alpha=10, beta=10, epsilon=0.0, is_NS=False, is_HP=True, is_FIR=False)
 
-    ## AWGN
-    # trainer = Trainer(train_snr=30,
-    #                 device=0, d2=18, z_dim=512, 
-    #                 lamda=0.0, alpha=10, beta=10, epsilon=0.0, is_NS=False, is_HP=True, is_FIR=False)
+    # AWGN
+    # trainer = Trainer(train_snr=10,
+    #                   device=0, d2=18, z_dim=512,
+    #                   lamda=0.0, alpha=10, beta=10, epsilon=0.0, is_NS=False, is_HP=False, is_FIR=False, is_TS=False)
 
-    trainer.run(load_best=True, retrain=False, is_del_loger=False)
+    # trainer.GAN_Generate()
+    trainer.run(load_best=False, retrain=True, is_del_loger=True)
 
     trainer.eval(0, eval_dataset='T1', mode=None, is_record=False)
     trainer.eval(0, eval_dataset='T2', mode=None, is_record=False)
